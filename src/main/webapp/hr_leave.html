@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>HR Leave Management | EMS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+<link href="assets/css/main.css" rel="stylesheet">
+
+<style>
+
+body{
+    background:#f4f7fb;
+}
+
+.card-box{
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.stat{
+    font-size:22px;
+    font-weight:600;
+}
+
+.badge-pending{background:#ffc107;color:#000}
+.badge-approved{background:#198754}
+.badge-rejected{background:#dc3545}
+
+</style>
+
+</head>
+
+
+
+<body>
+
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<div class="container">
+
+<a class="navbar-brand fw-bold">EMS HR</a>
+
+<ul class="navbar-nav ms-auto">
+
+<li class="nav-item"><a class="nav-link" href="hr_dashboard.html">Dashboard</a></li>
+<li class="nav-item"><a class="nav-link" href="attendance-hr.html">Attendance</a></li>
+<li class="nav-item"><a class="nav-link" href="hr-payroll.html">Payroll</a></li>
+<li class="nav-item"><a class="nav-link active" href="#">Leaves</a></li>
+<li class="nav-item"><a class="nav-link text-warning" href="index.html">Logout</a></li>
+
+</ul>
+
+</div>
+</nav>
+
+
+
+
+<div class="container mt-4">
+
+
+<h4 class="mb-4">Leave Management</h4>
+
+
+
+<!-- KPI -->
+<div class="row g-3 mb-4">
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Total Requests</p>
+<div id="totalRec" class="stat text-primary">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Pending</p>
+<div id="pendingRec" class="stat text-warning">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Approved</p>
+<div id="approvedRec" class="stat text-success">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Rejected</p>
+<div id="rejectedRec" class="stat text-danger">0</div>
+</div>
+</div>
+
+</div>
+
+
+
+<!-- Filter -->
+<div class="card-box mb-4">
+
+<div class="row g-3">
+
+<div class="col-md-3">
+<select id="filterEmployee" class="form-select"></select>
+</div>
+
+<div class="col-md-3">
+<select id="filterStatus" class="form-select">
+
+<option value="">All Status</option>
+<option>Pending</option>
+<option>Approved</option>
+<option>Rejected</option>
+
+</select>
+</div>
+
+<div class="col-md-3">
+<input type="text" id="searchBox" class="form-control" placeholder="Search name...">
+</div>
+
+<div class="col-md-2">
+<button class="btn btn-primary w-100" onclick="loadLeaves()">Apply</button>
+</div>
+
+</div>
+
+</div>
+
+
+
+
+<!-- Table -->
+<div class="card-box">
+
+<div class="table-responsive">
+
+<table class="table table-hover align-middle">
+
+<thead class="table-dark">
+
+<tr>
+<th>Employee</th>
+<th>Type</th>
+<th>From</th>
+<th>To</th>
+<th>Reason</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+
+</thead>
+
+<tbody id="records"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+
+
+<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+
+let all=[];
+
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+loadEmployees();
+loadLeaves();
+
+});
+
+
+
+
+// Employees
+function loadEmployees(){
+
+fetch("HRLeaveServlet?action=getEmployees")
+
+.then(r=>r.json())
+
+.then(d=>{
+
+let sel=document.getElementById("filterEmployee");
+
+sel.innerHTML=`<option value="">All Employees</option>`;
+
+d.forEach(e=>{
+
+sel.innerHTML+=`<option value="${e.id}">${e.name}</option>`;
+
+});
+
+});
+
+}
+
+
+
+
+// Leaves
+function loadLeaves(){
+
+const emp=document.getElementById("filterEmployee").value;
+const st=document.getElementById("filterStatus").value;
+const search=document.getElementById("searchBox").value;
+
+let url="HRLeaveServlet?action=viewLeaveRequests";
+
+if(emp) url+=`&employeeId=${emp}`;
+if(st) url+=`&status=${st}`;
+if(search) url+=`&search=${search}`;
+
+
+fetch(url)
+
+.then(r=>r.json())
+
+.then(d=>{
+
+all=d.records || [];
+
+render();
+calcKPI();
+
+});
+
+}
+
+
+
+
+// Render
+function render(){
+
+let tb=document.getElementById("records");
+tb.innerHTML="";
+
+
+if(all.length===0){
+
+tb.innerHTML=`<tr>
+<td colspan="7" class="text-center text-muted">No Requests Found</td>
+</tr>`;
+
+return;
+
+}
+
+
+all.forEach(r=>{
+
+
+let badge="badge-pending";
+
+if(r.status==="Approved") badge="badge-approved";
+if(r.status==="Rejected") badge="badge-rejected";
+
+
+tb.innerHTML+=`
+
+<tr>
+
+<td>${r.employee_name}</td>
+<td>${r.leave_type}</td>
+<td>${r.start_date}</td>
+<td>${r.end_date}</td>
+<td>${r.reason}</td>
+
+<td>
+<span class="badge ${badge}">${r.status}</span>
+</td>
+
+
+<td>
+
+${r.status==="Pending" ? `
+
+<button class="btn btn-sm btn-success"
+onclick="update(${r.id},'Approved')">
+
+Approve
+
+</button>
+
+<button class="btn btn-sm btn-danger"
+onclick="update(${r.id},'Rejected')">
+
+Reject
+
+</button>
+
+` : "-"}
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+
+}
+
+
+
+
+// KPI
+function calcKPI(){
+
+totalRec.innerText=all.length;
+
+pendingRec.innerText=all.filter(r=>r.status==="Pending").length;
+approvedRec.innerText=all.filter(r=>r.status==="Approved").length;
+rejectedRec.innerText=all.filter(r=>r.status==="Rejected").length;
+
+}
+
+
+
+
+// Update
+function update(id,status){
+
+fetch("HRLeaveServlet",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/x-www-form-urlencoded"
+},
+
+body:`action=updateLeaveStatus&id=${id}&status=${status}`
+
+})
+
+.then(r=>r.json())
+
+.then(d=>{
+
+alert(d.message);
+loadLeaves();
+
+});
+
+}
+
+
+</script>
+
+
+
+</body>
+</html>

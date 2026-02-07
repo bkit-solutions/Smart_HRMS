@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Employee Dashboard | EMS</title>
+
+<link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+<link href="assets/css/main.css" rel="stylesheet">
+
+<style>
+
+body{
+  background:#f5f7fb;
+}
+
+.dashboard-card{
+  border-radius:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+  padding:20px;
+  background:white;
+}
+
+.stat-value{
+  font-size:28px;
+  font-weight:bold;
+}
+
+</style>
+</head>
+
+
+<body>
+
+<!-- NAVBAR -->
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+
+<div class="container-fluid">
+
+<a class="navbar-brand fw-bold">EMS Dashboard</a>
+
+<div class="collapse navbar-collapse">
+
+<ul class="navbar-nav ms-auto">
+
+<li class="nav-item">
+<a class="nav-link" href="attendance-employee.html">Attendance</a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="employee-leave.html">Leaves</a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="employee-payroll.html">Payroll</a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link text-warning" href="index.html">Logout</a>
+</li>
+
+</ul>
+
+</div>
+</div>
+</nav>
+
+
+<!-- MAIN -->
+
+<div class="container my-4">
+
+<h3>
+Welcome,
+<span id="employeeName" class="text-primary">Employee</span>
+</h3>
+
+<p class="text-muted">
+Your AI-powered performance dashboard
+</p>
+
+
+<!-- STATS -->
+
+<div class="row g-4 mb-4">
+
+
+<div class="col-md-3">
+<div class="dashboard-card text-center">
+
+<i class="bi bi-graph-up fs-1 text-success"></i>
+
+<h6>Performance</h6>
+
+<div id="perfScore" class="stat-value">--</div>
+
+<small id="perfGrade"></small>
+
+</div>
+</div>
+
+
+<div class="col-md-3">
+<div class="dashboard-card text-center">
+
+<i class="bi bi-calendar-check fs-1 text-primary"></i>
+
+<h6>Attendance</h6>
+
+<div id="attPercent" class="stat-value">--</div>
+
+<small>This Month</small>
+
+</div>
+</div>
+
+
+<div class="col-md-3">
+<div class="dashboard-card text-center">
+
+<i class="bi bi-cash-stack fs-1 text-warning"></i>
+
+<h6>Net Salary</h6>
+
+<div id="salary" class="stat-value">--</div>
+
+<small id="payStatus"></small>
+
+</div>
+</div>
+
+
+<div class="col-md-3">
+<div class="dashboard-card text-center">
+
+<i class="bi bi-shield-exclamation fs-1 text-danger"></i>
+
+<h6>Risk</h6>
+
+<div id="risk" class="stat-value">--</div>
+
+<small>AI Prediction</small>
+
+</div>
+</div>
+
+
+</div>
+
+
+<!-- AI -->
+
+<div class="dashboard-card mb-4">
+
+<h5>🤖 AI Recommendation</h5>
+
+<div id="recommendation" class="alert alert-info">
+Loading...
+</div>
+
+</div>
+
+
+</div>
+
+
+
+<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+
+<!-- ================= NEW SCRIPT ================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", ()=>{
+
+  loadDashboard();
+
+});
+
+
+function loadDashboard(){
+
+  fetch("EmployeeDashboardServlet")
+
+  .then(res => res.json())
+
+  .then(data => {
+
+    document.getElementById("employeeName").textContent =
+      data.name || "Employee";
+
+    document.getElementById("perfScore").textContent =
+      data.score ?? "--";
+
+    document.getElementById("perfGrade").textContent =
+      "Grade: " + (data.grade || "N/A");
+
+    document.getElementById("risk").textContent =
+      data.risk || "N/A";
+
+    document.getElementById("attPercent").textContent =
+      (data.attendance ?? 0) + "%";
+
+    document.getElementById("salary").textContent =
+      "₹" + (data.salary ?? 0);
+
+    document.getElementById("payStatus").textContent =
+      data.payStatus || "N/A";
+
+    document.getElementById("recommendation").textContent =
+      data.recommendation || "No recommendation";
+
+  })
+
+  .catch(err=>{
+
+    console.log(err);
+
+    document.getElementById("recommendation").textContent =
+      "Failed to load data";
+
+  });
+
+}
+
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+  <title>Register - Employee Management System (EMS)</title>
+
+  <!-- Favicons -->
+  <link href="assets/img/favicon.png" rel="icon">
+  <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Vendor CSS -->
+  <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Main CSS -->
+  <link href="assets/css/main.css" rel="stylesheet">
+
+  <!-- Custom Style -->
+  <style>
+    body {
+      background: linear-gradient(135deg, #dcfce7, #dbeafe);
+      min-height: 100vh;
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .register-container {
+      width: 100%;
+      max-width: 450px;
+      padding: 40px 35px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(14px);
+      border-radius: 18px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      animation: fadeUp 0.6s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .register-container h2 {
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .register-container p {
+      text-align: center;
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 25px;
+    }
+
+    .input-group-text {
+      background: #fff;
+      border-right: none;
+    }
+
+    .form-control,
+    .form-select {
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      box-shadow: none;
+      border-color: #22c55e;
+    }
+
+    .btn-register {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      font-weight: 500;
+      border: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-register:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4);
+    }
+
+    .error-message {
+      color: #dc2626;
+      font-size: 14px;
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .login-link {
+      display: block;
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .login-link a {
+      text-decoration: none;
+      font-weight: 500;
+      color: #0d6efd;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+
+    .toggle-password {
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="register-container">
+
+    <h2>Register on EMS</h2>
+    <p>Create your employee account</p>
+
+    <!-- Register Form -->
+    <form action="AuthServlet" method="post">
+
+      <input type="hidden" name="action" value="register">
+
+      <!-- Name -->
+      <div class="mb-3 input-group">
+        <span class="input-group-text">
+          <i class="bi bi-person"></i>
+        </span>
+        <input type="text" class="form-control" name="name" placeholder="Full Name" required>
+      </div>
+
+      <!-- Email -->
+      <div class="mb-3 input-group">
+        <span class="input-group-text">
+          <i class="bi bi-envelope"></i>
+        </span>
+        <input type="email" class="form-control" name="email" placeholder="Email Address" required>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-3 input-group">
+        <span class="input-group-text">
+          <i class="bi bi-lock"></i>
+        </span>
+
+        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+
+        <span class="input-group-text toggle-password" onclick="togglePassword()">
+          <i class="bi bi-eye"></i>
+        </span>
+      </div>
+
+      <!-- Role -->
+      <div class="mb-3 input-group">
+        <span class="input-group-text">
+          <i class="bi bi-briefcase"></i>
+        </span>
+
+        <select class="form-select" id="role" name="role" required onchange="toggleDepartmentField()">
+          <option value="Employee">Employee</option>
+          <option value="HR">HR</option>
+        </select>
+      </div>
+
+      <!-- Department -->
+      <div class="mb-3 input-group" id="departmentField">
+        <span class="input-group-text">
+          <i class="bi bi-building"></i>
+        </span>
+
+        <select class="form-select" name="department">
+          <option value="IT">IT</option>
+          <option value="NON-IT">Non-IT</option>
+        </select>
+      </div>
+
+      <!-- Register Button -->
+      <button type="submit" class="btn btn-register">Register</button>
+
+      <!-- Error -->
+      <p class="error-message" id="error-msg"></p>
+
+      <!-- Login Link -->
+      <div class="login-link">
+        Already have an account? <a href="index.html">Login</a>
+      </div>
+
+    </form>
+
+  </div>
+
+
+  <!-- Scripts -->
+  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Show / Hide Password
+    function togglePassword() {
+      const pwd = document.getElementById("password");
+
+      if (pwd.type === "password") {
+        pwd.type = "text";
+      } else {
+        pwd.type = "password";
+      }
+    }
+
+    // Hide Department for HR
+    function toggleDepartmentField() {
+      const role = document.getElementById("role").value;
+      const dept = document.getElementById("departmentField");
+
+      if (role === "HR") {
+        dept.style.display = "none";
+      } else {
+        dept.style.display = "flex";
+      }
+    }
+
+    // Show Error from URL
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has("error")) {
+      const msg = document.getElementById("error-msg");
+      msg.innerText = params.get("error");
+      msg.style.display = "block";
+    }
+  </script>
+
+</body>
+
+</html>

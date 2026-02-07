@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+  <title>Login - Employee Management System (EMS)</title>
+
+  
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Vendor CSS -->
+  <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Main CSS -->
+  <link href="assets/css/main.css" rel="stylesheet">
+
+  <!-- Custom Style -->
+  <style>
+    body {
+      background: linear-gradient(135deg, #dbeafe, #fef3c7);
+      min-height: 100vh;
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 40px 35px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(14px);
+      border-radius: 18px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      animation: fadeUp 0.6s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-container h2 {
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .login-container p {
+      text-align: center;
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 25px;
+    }
+
+    .input-group-text {
+      background: #fff;
+      border-right: none;
+    }
+
+    .form-control {
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .form-control:focus {
+      box-shadow: none;
+      border-color: #0d6efd;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0d6efd, #2563eb);
+      color: white;
+      font-weight: 500;
+      border: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(13, 110, 253, 0.4);
+    }
+
+    .error-message {
+      color: #dc2626;
+      font-size: 14px;
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .register-link {
+      display: block;
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .register-link a {
+      text-decoration: none;
+      font-weight: 500;
+      color: #0d6efd;
+    }
+
+    .register-link a:hover {
+      text-decoration: underline;
+    }
+
+    .toggle-password {
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="login-container">
+
+    <h2>Login to EMS</h2>
+    <p>Smart Employee Management System</p>
+
+    <!-- Login Form -->
+    <form action="AuthServlet" method="post">
+
+      <input type="hidden" name="action" value="login">
+
+      <!-- Email -->
+      <div class="mb-3 input-group">
+        <span class="input-group-text">
+          <i class="bi bi-envelope"></i>
+        </span>
+        <input type="email" class="form-control" name="email" placeholder="Email Address" required>
+      </div>
+
+      <!-- Password -->
+      <div class="mb-3 input-group">
+        <span class="input-group-text">
+          <i class="bi bi-lock"></i>
+        </span>
+
+        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+
+        <span class="input-group-text toggle-password" onclick="togglePassword()">
+          <i class="bi bi-eye"></i>
+        </span>
+      </div>
+
+      <!-- Login Button -->
+      <button type="submit" class="btn btn-login">Login</button>
+
+      <!-- Error Message -->
+      <p class="error-message" id="error-msg"></p>
+
+      <!-- Register -->
+      <div class="register-link">
+        Don’t have an account? <a href="register.html">Register</a>
+      </div>
+
+    </form>
+
+  </div>
+
+
+  <!-- Scripts -->
+  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Show / Hide Password
+    function togglePassword() {
+      const pwd = document.getElementById("password");
+
+      if (pwd.type === "password") {
+        pwd.type = "text";
+      } else {
+        pwd.type = "password";
+      }
+    }
+
+    // Show Error from URL
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has("error")) {
+      const msg = document.getElementById("error-msg");
+      msg.innerText = params.get("error");
+      msg.style.display = "block";
+    }
+  </script>
+
+</body>
+
+</html>

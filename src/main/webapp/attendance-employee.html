@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>My Attendance | EMS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+<link href="assets/css/main.css" rel="stylesheet">
+
+<style>
+body {
+    background: #f4f7fb;
+}
+
+.card-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.stat {
+    font-size: 22px;
+    font-weight: 600;
+}
+</style>
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<div class="container">
+
+<a class="navbar-brand fw-bold" href="Employee.html">EMS</a>
+
+<ul class="navbar-nav ms-auto">
+<li class="nav-item"><a class="nav-link" href="Employee.html">Dashboard</a></li>
+<li class="nav-item"><a class="nav-link active" href="#">Attendance</a></li>
+<li class="nav-item"><a class="nav-link" href="employee-payroll.html">Payroll</a></li>
+<li class="nav-item"><a class="nav-link" href="employee_leave.html">Leaves</a></li>
+<li class="nav-item"><a class="nav-link text-warning" href="index.html">Logout</a></li>
+</ul>
+
+</div>
+</nav>
+
+
+<div class="container mt-5">
+
+<h3 class="mb-4">My Attendance</h3>
+
+
+<!-- Status Cards -->
+<div class="row g-4 mb-4">
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Today</p>
+<div id="today" class="stat"></div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Status</p>
+<div id="status" class="stat text-primary">--</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Work Hours</p>
+<div id="hours" class="stat text-success">--</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Warning</p>
+<div id="warning" class="stat text-danger">Normal</div>
+</div>
+</div>
+
+</div>
+
+
+<!-- Buttons -->
+<div class="card-box text-center mb-4">
+
+<h5>Check In / Check Out</h5>
+
+<button id="checkInBtn" class="btn btn-success me-2">
+<i class="bi bi-box-arrow-in-right"></i> Check In
+</button>
+
+<button id="checkOutBtn" class="btn btn-danger" disabled>
+<i class="bi bi-box-arrow-right"></i> Check Out
+</button>
+
+</div>
+
+
+<!-- History -->
+<div class="card-box">
+
+<h5>Attendance History</h5>
+
+<table class="table table-bordered mt-3">
+<thead class="table-dark">
+<tr>
+<th>Date</th>
+<th>Check In</th>
+<th>Check Out</th>
+<th>Hours</th>
+<th>Status</th>
+</tr>
+</thead>
+
+<tbody id="history"></tbody>
+</table>
+
+</div>
+
+</div>
+
+
+<!-- Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+
+<div id="toastBox" class="toast align-items-center text-bg-success border-0">
+<div class="d-flex">
+<div class="toast-body" id="toastMsg"></div>
+<button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+</div>
+</div>
+
+</div>
+
+
+
+<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+const today = new Date().toISOString().split("T")[0];
+
+document.getElementById("today").innerText = today;
+
+
+const toast = new bootstrap.Toast(document.getElementById("toastBox"));
+
+function showToast(msg,color="success"){
+
+let box = document.getElementById("toastBox");
+
+box.className = "toast align-items-center text-bg-"+color+" border-0";
+
+document.getElementById("toastMsg").innerText = msg;
+
+toast.show();
+}
+
+
+// Format Date
+function formatTime(dateStr){
+
+if(!dateStr) return "—";
+
+let d = new Date(dateStr);
+
+return d.toLocaleString("en-IN",{
+    day:"2-digit",
+    month:"short",
+    year:"numeric",
+    hour:"2-digit",
+    minute:"2-digit",
+    hour12:true
+});
+
+}
+
+
+
+// Load Data
+function loadAttendance(){
+
+fetch("AttendanceServlet")
+.then(res=>res.json())
+.then(data=>{
+
+let tbody="";
+
+let todayRec=null;
+
+data.records.forEach(r=>{
+
+tbody+=`
+
+<tr>
+<td>${r.date}</td>
+<td>${formatTime(r.check_in)}</td>
+<td>${formatTime(r.check_out)}</td>
+<td>${r.hours || "--"}</td>
+<td>${r.status}</td>
+</tr>
+
+`;
+
+if(r.date===today){
+    todayRec=r;
+}
+
+});
+
+document.getElementById("history").innerHTML=tbody;
+
+
+// Button Logic
+if(!todayRec){
+
+// Not checked in
+checkInBtn.disabled=false;
+checkOutBtn.disabled=true;
+
+status.innerText="Absent";
+hours.innerText="--";
+
+}
+
+else{
+
+status.innerText=todayRec.status;
+hours.innerText=todayRec.hours || "--";
+
+if(todayRec.check_out){
+
+// Fully done
+checkInBtn.disabled=true;
+checkOutBtn.disabled=true;
+
+}
+
+else{
+
+// Checked in only
+checkInBtn.disabled=true;
+checkOutBtn.disabled=false;
+
+}
+
+}
+
+});
+
+}
+
+
+
+// Check In
+checkInBtn.onclick=()=>{
+
+fetch("AttendanceServlet",{
+method:"POST",
+headers:{"Content-Type":"application/x-www-form-urlencoded"},
+body:"action=checkin"
+})
+.then(r=>r.json())
+.then(d=>{
+
+showToast(d.message,"success");
+loadAttendance();
+
+});
+
+};
+
+
+// Check Out
+checkOutBtn.onclick=()=>{
+
+fetch("AttendanceServlet",{
+method:"POST",
+headers:{"Content-Type":"application/x-www-form-urlencoded"},
+body:"action=checkout"
+})
+.then(r=>r.json())
+.then(d=>{
+
+showToast(d.message,"danger");
+loadAttendance();
+
+});
+
+};
+
+
+loadAttendance();
+
+</script>
+
+</body>
+</html>

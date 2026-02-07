@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>HR Dashboard | EMS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+<link href="assets/css/main.css" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+    background:#f4f7fb;
+}
+
+.card-box{
+    background:#fff;
+    border-radius:12px;
+    padding:20px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.stat{
+    font-size:24px;
+    font-weight:600;
+}
+
+.insight-box{
+    background:#e9f2ff;
+    border-left:5px solid #0d6efd;
+    padding:15px;
+    border-radius:8px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<div class="container">
+
+<a class="navbar-brand fw-bold" href="#">EMS HR</a>
+
+<ul class="navbar-nav ms-auto">
+
+<li class="nav-item">
+<a class="nav-link active" href="#">Dashboard</a>
+</li>
+<li class="nav-item">
+<a class="nav-link" href="hr-performance.html">Performance</a>
+</li>
+
+
+<li class="nav-item">
+<a class="nav-link" href="attendance-hr.html">Attendance</a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="hr-payroll.html">Payroll</a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link" href="hr_leave.html">Leaves</a>
+</li>
+
+<li class="nav-item">
+<a class="nav-link text-warning" href="index.html">Logout</a>
+</li>
+
+</ul>
+
+</div>
+</nav>
+
+
+
+<div class="container mt-5">
+
+<h3 class="mb-4">HR Analytics Dashboard</h3>
+
+
+<!-- KPI -->
+<div class="row g-4 mb-4">
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Total Employees</p>
+<div id="empCount" class="stat text-primary">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Present Today</p>
+<div id="presentCount" class="stat text-success">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Pending Leaves</p>
+<div id="pendingLeave" class="stat text-warning">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Total Payroll (₹)</p>
+<div id="totalPayroll" class="stat text-danger">0</div>
+</div>
+</div>
+
+</div>
+
+
+
+<!-- AI Insight -->
+<div class="insight-box mb-4">
+
+<h6><i class="bi bi-robot"></i> AI Insights</h6>
+
+<p id="aiInsight">
+Loading insights...
+</p>
+
+</div>
+
+
+
+<!-- Charts -->
+<div class="row g-4">
+
+
+<div class="col-md-6">
+<div class="card-box">
+
+<h6>Attendance Trends</h6>
+
+<canvas id="attendanceChart"></canvas>
+
+</div>
+</div>
+
+
+<div class="col-md-6">
+<div class="card-box">
+
+<h6>Payroll Distribution</h6>
+
+<canvas id="payrollChart"></canvas>
+
+</div>
+</div>
+
+
+<div class="col-md-12">
+<div class="card-box">
+
+<h6>Leave Requests Trend</h6>
+
+<canvas id="leaveChart"></canvas>
+
+</div>
+</div>
+
+
+</div>
+
+</div>
+
+
+
+<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+loadKPI();
+loadAttendance();
+loadPayroll();
+loadLeaves();
+
+});
+
+
+
+
+// KPI
+function loadKPI(){
+
+fetch("HRDashboardServlet?action=kpi")
+
+.then(r=>r.json())
+
+.then(d=>{
+
+empCount.innerText=d.totalEmployees;
+presentCount.innerText=d.presentToday;
+pendingLeave.innerText=d.pendingLeaves;
+totalPayroll.innerText="₹"+d.totalPayroll.toLocaleString("en-IN");
+
+generateAI(d);
+
+});
+
+}
+
+
+
+// AI Insight Generator
+function generateAI(d){
+
+let msg="";
+
+let attendanceRate=(d.presentToday/d.totalEmployees)*100;
+
+
+if(attendanceRate<70){
+
+msg+="⚠️ Attendance is low. Consider employee engagement programs. ";
+
+}
+
+else{
+
+msg+="✅ Attendance is healthy. ";
+
+}
+
+
+if(d.pendingLeaves>10){
+
+msg+="Many leave requests pending. Speed up approvals. ";
+
+}
+
+
+if(d.totalPayroll>1000000){
+
+msg+="High payroll expense. Review cost optimization.";
+
+}
+
+
+aiInsight.innerText=msg || "All systems operating normally.";
+
+}
+
+
+
+// Attendance Chart
+function loadAttendance(){
+
+fetch("HRDashboardServlet?action=attendance")
+
+.then(r=>r.json())
+
+.then(d=>{
+
+new Chart(attendanceChart,{
+
+type:"bar",
+
+data:{
+
+labels:d.labels,
+
+datasets:[{
+
+label:"Present Employees",
+
+data:d.values
+
+}]
+
+},
+
+options:{responsive:true}
+
+});
+
+});
+
+}
+
+
+
+// Payroll Chart
+function loadPayroll(){
+
+fetch("HRDashboardServlet?action=payroll")
+
+.then(r=>r.json())
+
+.then(d=>{
+
+new Chart(payrollChart,{
+
+type:"doughnut",
+
+data:{
+
+labels:d.labels,
+
+datasets:[{
+
+data:d.values
+
+}]
+
+}
+
+});
+
+});
+
+}
+
+
+
+// Leave Chart
+function loadLeaves(){
+
+fetch("HRDashboardServlet?action=leave")
+
+.then(r=>r.json())
+
+.then(d=>{
+
+new Chart(leaveChart,{
+
+type:"line",
+
+data:{
+
+labels:d.labels,
+
+datasets:[{
+
+label:"Leaves",
+
+data:d.values,
+fill:false,
+tension:0.3
+
+}]
+
+}
+
+});
+
+});
+
+}
+
+</script>
+
+
+</body>
+</html>

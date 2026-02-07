@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>HR Attendance | EMS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+<link href="assets/css/main.css" rel="stylesheet">
+
+<style>
+
+body{
+    background:#f4f7fb;
+}
+
+.card-box{
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.stat{
+    font-size:22px;
+    font-weight:600;
+}
+
+.badge-present{background:#198754}
+.badge-absent{background:#dc3545}
+.badge-leave{background:#ffc107;color:#000}
+
+</style>
+
+</head>
+
+
+
+<body>
+
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<div class="container">
+
+<a class="navbar-brand fw-bold">EMS HR</a>
+
+<ul class="navbar-nav ms-auto">
+
+<li class="nav-item"><a class="nav-link" href="hr_dashboard.html">Dashboard</a></li>
+<li class="nav-item"><a class="nav-link active" href="#">Attendance</a></li>
+<li class="nav-item"><a class="nav-link" href="hr-payroll.html">Payroll</a></li>
+<li class="nav-item"><a class="nav-link" href="hr_leave.html">Leaves</a></li>
+<li class="nav-item"><a class="nav-link text-warning" href="index.html">Logout</a></li>
+
+</ul>
+
+</div>
+</nav>
+
+
+
+
+<div class="container mt-4">
+
+
+<h4 class="mb-4">Attendance Management</h4>
+
+
+
+<!-- KPI -->
+<div class="row g-3 mb-4">
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Total Records</p>
+<div id="totalRec" class="stat text-primary">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Present</p>
+<div id="presentRec" class="stat text-success">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Absent</p>
+<div id="absentRec" class="stat text-danger">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Leave</p>
+<div id="leaveRec" class="stat text-warning">0</div>
+</div>
+</div>
+
+</div>
+
+
+
+<!-- Filter -->
+<div class="card-box mb-4">
+
+<div class="row g-3">
+
+<div class="col-md-3">
+<input type="date" id="filterDate" class="form-control">
+</div>
+
+<div class="col-md-3">
+<input type="text" id="searchBox" class="form-control" placeholder="Search employee...">
+</div>
+
+<div class="col-md-2">
+<button class="btn btn-primary w-100" onclick="loadAttendance()">Filter</button>
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- Table -->
+<div class="card-box">
+
+<div class="table-responsive">
+
+<table class="table table-hover align-middle">
+
+<thead class="table-dark">
+
+<tr>
+<th>Employee</th>
+<th>Date</th>
+<th>Check In</th>
+<th>Check Out</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+
+</thead>
+
+<tbody id="records"></tbody>
+
+</table>
+
+</div>
+
+
+
+<!-- Pagination -->
+<div class="d-flex justify-content-between mt-3">
+
+<button id="prev" class="btn btn-outline-secondary" onclick="prev()">Prev</button>
+
+<span id="pageInfo"></span>
+
+<button id="next" class="btn btn-outline-secondary" onclick="next()">Next</button>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+
+
+<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+
+let page=1;
+let totalPages=1;
+let all=[];
+
+
+document.addEventListener("DOMContentLoaded",loadAttendance);
+
+
+// Load Records
+function loadAttendance(){
+
+const date=document.getElementById("filterDate").value;
+const search=document.getElementById("searchBox").value;
+
+let url=`HRAttendanceServlet?action=view&page=${page}`;
+
+if(date) url+=`&date=${date}`;
+if(search) url+=`&search=${search}`;
+
+fetch(url)
+
+.then(r=>r.json())
+
+.then(d=>{
+
+all=d.records;
+totalPages=d.totalPages;
+
+render();
+calcKPI();
+
+});
+
+}
+
+
+
+// Render Table
+function render(){
+
+let tbody=document.getElementById("records");
+tbody.innerHTML="";
+
+if(all.length===0){
+
+tbody.innerHTML=`<tr>
+<td colspan="6" class="text-center text-muted">No Records Found</td>
+</tr>`;
+
+return;
+
+}
+
+
+all.forEach(r=>{
+
+let badge="badge-present";
+
+if(r.status==="Absent") badge="badge-absent";
+if(r.status==="Leave") badge="badge-leave";
+
+
+tbody.innerHTML+=`
+
+<tr>
+
+<td>${r.employeeName}</td>
+<td>${r.date}</td>
+
+<td>
+<input type="datetime-local" class="form-control"
+id="in-${r.user_id}-${r.date}" value="${r.check_in}">
+</td>
+
+<td>
+<input type="datetime-local" class="form-control"
+id="out-${r.user_id}-${r.date}" value="${r.check_out}">
+</td>
+
+<td>
+<span class="badge ${badge}">${r.status}</span>
+
+<select class="form-select mt-1"
+id="st-${r.user_id}-${r.date}">
+
+<option ${r.status=="Present"?"selected":""}>Present</option>
+<option ${r.status=="Absent"?"selected":""}>Absent</option>
+<option ${r.status=="Leave"?"selected":""}>Leave</option>
+
+</select>
+</td>
+
+<td>
+
+<button class="btn btn-sm btn-success"
+onclick="update(${r.user_id},'${r.date}')">
+
+Save
+
+</button>
+
+<button class="btn btn-sm btn-danger"
+onclick="remove(${r.user_id},'${r.date}')">
+
+Delete
+
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+
+pageInfo.innerText=`Page ${page} of ${totalPages}`;
+
+prev.disabled=page===1;
+next.disabled=page===totalPages;
+
+}
+
+
+
+// KPI
+function calcKPI(){
+
+totalRec.innerText=all.length;
+
+presentRec.innerText=all.filter(r=>r.status=="Present").length;
+absentRec.innerText=all.filter(r=>r.status=="Absent").length;
+leaveRec.innerText=all.filter(r=>r.status=="Leave").length;
+
+}
+
+
+
+// Pagination
+function prev(){
+if(page>1){page--;loadAttendance();}
+}
+
+function next(){
+if(page<totalPages){page++;loadAttendance();}
+}
+
+
+
+// Update
+function update(uid,date){
+
+const cin=document.getElementById(`in-${uid}-${date}`).value;
+const cout=document.getElementById(`out-${uid}-${date}`).value;
+const st=document.getElementById(`st-${uid}-${date}`).value;
+
+
+fetch("HRAttendanceServlet",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/x-www-form-urlencoded"
+},
+
+body:`action=update&userId=${uid}&date=${date}&checkIn=${cin}&checkOut=${cout}&status=${st}`
+
+})
+
+.then(r=>r.json())
+
+.then(d=>{
+
+alert(d.message);
+loadAttendance();
+
+});
+
+}
+
+
+
+// Delete
+function remove(uid,date){
+
+if(!confirm("Delete this record?")) return;
+
+fetch("HRAttendanceServlet",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/x-www-form-urlencoded"
+},
+
+body:`action=delete&userId=${uid}&date=${date}`
+
+})
+
+.then(r=>r.json())
+
+.then(d=>{
+
+alert(d.message);
+loadAttendance();
+
+});
+
+}
+
+</script>
+
+
+
+</body>
+</html>

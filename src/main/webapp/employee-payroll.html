@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>My Payroll | EMS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+<link href="assets/css/main.css" rel="stylesheet">
+
+<style>
+body {
+    background: #f4f7fb;
+}
+
+.card-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.stat {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.badge-paid {
+    background: #28a745;
+}
+
+.badge-pending {
+    background: #dc3545;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<div class="container">
+
+<a class="navbar-brand fw-bold" href="Employee.html">EMS</a>
+
+<ul class="navbar-nav ms-auto">
+<li class="nav-item"><a class="nav-link" href="Employee.html">Dashboard</a></li>
+<li class="nav-item"><a class="nav-link" href="attendance-employee.html">Attendance</a></li>
+<li class="nav-item"><a class="nav-link active" href="#">Payroll</a></li>
+<li class="nav-item"><a class="nav-link" href="employee_leave.html">Leaves</a></li>
+<li class="nav-item"><a class="nav-link text-warning" href="index.html">Logout</a></li>
+</ul>
+
+</div>
+</nav>
+
+
+<div class="container mt-5">
+
+<h3 class="mb-4">My Payroll</h3>
+
+
+<!-- Summary -->
+<div class="row g-4 mb-4">
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Total Salary</p>
+<div id="totalSalary" class="stat text-primary">₹0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Total Bonus</p>
+<div id="totalBonus" class="stat text-success">₹0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Total Deduction</p>
+<div id="totalDeduction" class="stat text-danger">₹0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Net Received</p>
+<div id="netSalary" class="stat text-dark">₹0</div>
+</div>
+</div>
+
+</div>
+
+
+<!-- Filter -->
+<div class="card-box mb-4">
+
+<div class="row g-3 align-items-end">
+
+<div class="col-md-4">
+<label>Month</label>
+<select id="filterMonth" class="form-control">
+<option value="">All</option>
+<option>January</option>
+<option>February</option>
+<option>March</option>
+<option>April</option>
+<option>May</option>
+<option>June</option>
+<option>July</option>
+<option>August</option>
+<option>September</option>
+<option>October</option>
+<option>November</option>
+<option>December</option>
+</select>
+</div>
+
+<div class="col-md-4">
+<label>Year</label>
+<input type="number" id="filterYear" class="form-control" value="2026">
+</div>
+
+<div class="col-md-4">
+<button onclick="fetchPayroll()" class="btn btn-primary w-100">
+Filter
+</button>
+</div>
+
+</div>
+
+</div>
+
+
+<!-- Table -->
+<div class="card-box">
+
+<h5>Salary Records</h5>
+
+<table class="table table-bordered mt-3">
+
+<thead class="table-dark">
+<tr>
+<th>Month</th>
+<th>Year</th>
+<th>Salary</th>
+<th>Bonus</th>
+<th>Deduction</th>
+<th>Net</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="records"></tbody>
+
+</table>
+
+<p id="noData" class="text-center text-muted mt-3 d-none">
+No payroll records found
+</p>
+
+</div>
+
+
+</div>
+
+
+<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded",fetchPayroll);
+
+
+function formatMoney(val){
+    return "₹"+Number(val).toLocaleString("en-IN");
+}
+
+
+function fetchPayroll(){
+
+let month=document.getElementById("filterMonth").value;
+let year=document.getElementById("filterYear").value;
+
+let url=`EmployeePayrollServlet?action=view&year=${year}`;
+
+if(month){
+    url+=`&month=${month}`;
+}
+
+
+fetch(url)
+.then(r=>r.json())
+.then(data=>{
+
+let rows="";
+let totalSal=0,totalBon=0,totalDed=0,totalNet=0;
+
+
+if(!data.records || data.records.length===0){
+
+document.getElementById("noData").classList.remove("d-none");
+document.getElementById("records").innerHTML="";
+
+resetSummary();
+return;
+
+}
+
+document.getElementById("noData").classList.add("d-none");
+
+
+data.records.forEach(r=>{
+
+// ✅ MATCHING BACKEND KEYS
+let salary    = Number(r.salary || 0);
+let bonus     = Number(r.bonuses || 0);
+let deduction = Number(r.deductions || 0);
+let net       = Number(r.net_salary || 0);
+
+
+totalSal+=salary;
+totalBon+=bonus;
+totalDed+=deduction;
+totalNet+=net;
+
+
+let badge = r.paid_status==="Paid"
+? `<span class="badge badge-paid">Paid</span>`
+: `<span class="badge badge-pending">Pending</span>`;
+
+
+let btn = r.paid_status==="Paid"
+? `<button class="btn btn-sm btn-success" onclick="download('${r.month}','${r.year}')">
+<i class="bi bi-download"></i>
+</button>`
+: `<button class="btn btn-sm btn-secondary" disabled>--</button>`;
+
+
+rows+=`
+
+<tr>
+<td>${r.month}</td>
+<td>${r.year}</td>
+<td>${formatMoney(salary)}</td>
+<td>${formatMoney(bonus)}</td>
+<td>${formatMoney(deduction)}</td>
+<td><b>${formatMoney(net)}</b></td>
+<td>${badge}</td>
+<td>${btn}</td>
+</tr>
+
+`;
+
+});
+
+
+document.getElementById("records").innerHTML=rows;
+
+updateSummary(totalSal,totalBon,totalDed,totalNet);
+
+});
+
+}
+
+
+
+function updateSummary(s,b,d,n){
+
+totalSalary.innerText=formatMoney(s);
+totalBonus.innerText=formatMoney(b);
+totalDeduction.innerText=formatMoney(d);
+netSalary.innerText=formatMoney(n);
+
+}
+
+
+function resetSummary(){
+
+totalSalary.innerText="₹0";
+totalBonus.innerText="₹0";
+totalDeduction.innerText="₹0";
+netSalary.innerText="₹0";
+
+}
+
+
+function download(m,y){
+
+window.location.href=
+`EmployeePayrollServlet?action=downloadPayslip&month=${m}&year=${y}`;
+
+}
+
+</script>
+
+
+
+</body>
+</html>

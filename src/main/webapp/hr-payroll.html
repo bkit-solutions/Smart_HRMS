@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>HR Payroll | EMS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+<link href="assets/css/main.css" rel="stylesheet">
+
+<style>
+
+body{
+    background:#f4f7fb;
+}
+
+.card-box{
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+.stat{
+    font-size:22px;
+    font-weight:600;
+}
+
+.badge-paid{background:#198754}
+.badge-pending{background:#ffc107;color:#000}
+
+</style>
+
+</head>
+
+
+
+<body>
+
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<div class="container">
+
+<a class="navbar-brand fw-bold">EMS HR</a>
+
+<ul class="navbar-nav ms-auto">
+
+<li class="nav-item"><a class="nav-link" href="hr_dashboard.html">Dashboard</a></li>
+<li class="nav-item"><a class="nav-link" href="attendance-hr.html">Attendance</a></li>
+<li class="nav-item"><a class="nav-link active" href="#">Payroll</a></li>
+<li class="nav-item"><a class="nav-link" href="hr_leave.html">Leaves</a></li>
+<li class="nav-item"><a class="nav-link text-warning" href="index.html">Logout</a></li>
+
+</ul>
+
+</div>
+</nav>
+
+
+
+
+<div class="container mt-4">
+
+<h4 class="mb-4">Payroll Management</h4>
+
+
+
+<!-- KPI -->
+<div class="row g-3 mb-4">
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Total Records</p>
+<div id="totalRec" class="stat text-primary">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Paid</p>
+<div id="paidRec" class="stat text-success">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Pending</p>
+<div id="pendingRec" class="stat text-warning">0</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card-box text-center">
+<p>Total Payout</p>
+<div id="totalPay" class="stat text-dark">₹0</div>
+</div>
+</div>
+
+</div>
+
+
+
+<!-- Filters -->
+<div class="card-box mb-4">
+
+<div class="row g-3">
+
+<div class="col-md-3">
+<select id="filterEmployee" class="form-select"></select>
+</div>
+
+<div class="col-md-2">
+<select id="filterMonth" class="form-select">
+
+<option value="">All Months</option>
+<option>January</option><option>February</option>
+<option>March</option><option>April</option>
+<option>May</option><option>June</option>
+<option>July</option><option>August</option>
+<option>September</option><option>October</option>
+<option>November</option><option>December</option>
+
+</select>
+</div>
+
+<div class="col-md-2">
+<input type="number" id="filterYear" class="form-control" value="2024">
+</div>
+
+<div class="col-md-3">
+<input type="text" id="searchBox" class="form-control" placeholder="Search employee...">
+</div>
+
+<div class="col-md-2">
+<button class="btn btn-primary w-100" onclick="loadPayroll()">Apply</button>
+</div>
+
+</div>
+
+</div>
+
+
+
+
+<!-- Table -->
+<div class="card-box">
+
+<div class="d-flex justify-content-between mb-3">
+
+<h6>Payroll Records</h6>
+
+<button class="btn btn-success btn-sm"
+data-bs-toggle="modal"
+data-bs-target="#addModal">
+
+<i class="bi bi-plus-circle"></i> Add Payroll
+
+</button>
+
+</div>
+
+
+<div class="table-responsive">
+
+<table class="table table-hover align-middle">
+
+<thead class="table-dark">
+
+<tr>
+<th>Employee</th>
+<th>Month</th>
+<th>Year</th>
+<th>Salary</th>
+<th>Bonus</th>
+<th>Deduction</th>
+<th>Net</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+
+</thead>
+
+<tbody id="records"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+<!-- Add Modal -->
+<div class="modal fade" id="addModal">
+<div class="modal-dialog">
+<div class="modal-content">
+
+<div class="modal-header">
+<h5>Add Payroll</h5>
+<button class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+
+<select id="addEmp" class="form-select mb-2"></select>
+<select id="addMonth" class="form-select mb-2">
+<option>January</option><option>February</option>
+<option>March</option><option>April</option>
+<option>May</option><option>June</option>
+<option>July</option><option>August</option>
+<option>September</option><option>October</option>
+<option>November</option><option>December</option>
+</select>
+
+<input id="addYear" class="form-control mb-2" value="2024">
+
+<input id="addSalary" class="form-control mb-2" placeholder="Salary">
+<input id="addBonus" class="form-control mb-2" placeholder="Bonus">
+<input id="addDed" class="form-control mb-3" placeholder="Deduction">
+
+<button class="btn btn-primary w-100" onclick="add()">Save</button>
+
+</div>
+
+</div>
+</div>
+</div>
+
+
+
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal">
+<div class="modal-dialog">
+<div class="modal-content">
+
+<div class="modal-header">
+<h5>Edit Payroll</h5>
+<button class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+
+<input type="hidden" id="editId">
+
+<input id="editSalary" class="form-control mb-2">
+<input id="editBonus" class="form-control mb-2">
+<input id="editDed" class="form-control mb-3">
+
+<button class="btn btn-primary w-100" onclick="update()">Update</button>
+
+</div>
+
+</div>
+</div>
+</div>
+
+
+
+
+<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+
+let data = [];
+
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+    loadEmployees();
+    loadPayroll();
+
+});
+
+
+
+// ================= EMPLOYEES =================
+function loadEmployees(){
+
+    fetch("HRPayrollServlet?action=getEmployees")
+
+    .then(r=>r.json())
+
+    .then(d=>{
+
+        let f = document.getElementById("filterEmployee");
+        let a = document.getElementById("addEmp");
+
+        f.innerHTML = `<option value="">All</option>`;
+        a.innerHTML = "";
+
+        d.forEach(e=>{
+
+            let op =
+            `<option value="${e.id}">${e.name}</option>`;
+
+            f.innerHTML += op;
+            a.innerHTML += op;
+
+        });
+
+    });
+
+}
+
+
+
+// ================= PAYROLL =================
+function loadPayroll(){
+
+    let emp = filterEmployee.value;
+    let month = filterMonth.value;
+    let year = filterYear.value;
+    let search = searchBox.value;
+
+    let url =
+    `HRPayrollServlet?action=view&year=${year}`;
+
+    if(emp) url+=`&userId=${emp}`;
+    if(month) url+=`&month=${month}`;
+    if(search) url+=`&search=${search}`;
+
+
+    fetch(url)
+
+    .then(r=>r.json())
+
+    .then(d=>{
+
+        data = d.records || [];
+
+        render();
+        calcKPI();
+
+    });
+
+}
+
+
+
+// ================= RENDER =================
+function render(){
+
+    let tb = records;
+
+    tb.innerHTML = "";
+
+
+    if(data.length === 0){
+
+        tb.innerHTML = `
+        <tr>
+        <td colspan="9"
+        class="text-center text-muted">
+        No Records
+        </td>
+        </tr>`;
+
+        return;
+    }
+
+
+    data.forEach(r=>{
+
+        let badge =
+        r.paid_status==="Paid" ?
+        "badge-paid" :
+        "badge-pending";
+
+
+        tb.innerHTML += `
+
+        <tr>
+
+        <td>${r.employeeName}</td>
+        <td>${r.month}</td>
+        <td>${r.year}</td>
+
+        <td>₹${r.salary}</td>
+        <td>₹${r.bonuses}</td>
+        <td>₹${r.deductions}</td>
+
+        <td><b>₹${r.net_salary}</b></td>
+
+        <td>
+        <span class="badge ${badge}">
+        ${r.paid_status}
+        </span>
+        </td>
+
+        <td>
+
+        <button class="btn btn-sm btn-warning"
+        onclick="edit(${r.id},
+        ${r.salary},
+        ${r.bonuses},
+        ${r.deductions})">
+
+        Edit
+
+        </button>
+
+        <button class="btn btn-sm btn-danger"
+        onclick="del(${r.id})">
+
+        Del
+
+        </button>
+
+        ${r.paid_status==="Pending"?`
+
+        <button class="btn btn-sm btn-success"
+        onclick="pay(${r.id})">
+
+        Pay
+
+        </button>`:""}
+
+        </td>
+
+        </tr>
+        `;
+
+    });
+
+}
+
+
+
+// ================= KPI =================
+function calcKPI(){
+
+    totalRec.innerText = data.length;
+
+    paidRec.innerText =
+    data.filter(r=>r.paid_status==="Paid").length;
+
+    pendingRec.innerText =
+    data.filter(r=>r.paid_status==="Pending").length;
+
+    let sum = 0;
+
+    data.forEach(r=>{
+        sum += Number(r.net_salary);
+    });
+
+    totalPay.innerText = "₹"+sum;
+
+}
+
+
+
+// ================= ADD =================
+function add(){
+
+    let body =
+    "action=addPayroll" +
+    "&userId=" + encodeURIComponent(addEmp.value) +
+    "&month=" + encodeURIComponent(addMonth.value) +
+    "&year=" + encodeURIComponent(addYear.value) +
+    "&salary=" + encodeURIComponent(addSalary.value) +
+    "&bonuses=" + encodeURIComponent(addBonus.value) +
+    "&deductions=" + encodeURIComponent(addDed.value);
+
+
+    fetch("HRPayrollServlet",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+
+        body: body
+    })
+
+    .then(r=>r.json())
+
+    .then(d=>{
+
+        alert(d.message);
+
+        loadPayroll();
+
+        bootstrap.Modal
+        .getInstance(addModal)
+        .hide();
+
+    });
+
+}
+
+
+
+// ================= EDIT =================
+function edit(id,s,b,d){
+
+    editId.value = id;
+
+    editSalary.value = s;
+    editBonus.value = b;
+    editDed.value = d;
+
+    new bootstrap.Modal(editModal).show();
+
+}
+
+
+
+// ================= UPDATE =================
+function update(){
+
+    let body =
+    "action=updatePayroll" +
+    "&id=" + encodeURIComponent(editId.value) +
+    "&salary=" + encodeURIComponent(editSalary.value) +
+    "&bonuses=" + encodeURIComponent(editBonus.value) +
+    "&deductions=" + encodeURIComponent(editDed.value);
+
+
+    fetch("HRPayrollServlet",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+
+        body: body
+    })
+
+    .then(r=>r.json())
+
+    .then(d=>{
+
+        alert(d.message);
+
+        loadPayroll();
+
+        bootstrap.Modal
+        .getInstance(editModal)
+        .hide();
+
+    });
+
+}
+
+
+
+// ================= DELETE =================
+function del(id){
+
+    if(!confirm("Delete payroll?")) return;
+
+
+    fetch("HRPayrollServlet",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+
+        body:
+        "action=deletePayroll&id="+id
+    })
+
+    .then(r=>r.json())
+
+    .then(d=>{
+
+        alert(d.message);
+
+        loadPayroll();
+
+    });
+
+}
+
+
+
+// ================= PAY =================
+function pay(id){
+
+    fetch("HRPayrollServlet",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+
+        body:
+        "action=markAsPaid&id="+id
+    })
+
+    .then(r=>r.json())
+
+    .then(d=>{
+
+        alert(d.message);
+
+        loadPayroll();
+
+    });
+
+}
+
+</script>
+
+
+
+
+</body>
+</html>
